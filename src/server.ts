@@ -8,7 +8,7 @@ const server = createServer((req, res) => {
 
   if (req.method === "GET" && path === "/hello") {
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ message: "Hello from Sami Bistro" }));
+    res.end(JSON.stringify({ message: "Hello from Sami Bistro, version 2" }));
     return;
   }
 
