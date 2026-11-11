@@ -1,0 +1,23 @@
+name: CI
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the code from the pull request
+        uses: actions/checkout@v4
+      - name: Install Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install the exact libraries from package-lock.json
+        run: npm ci
+      - name: Check the code compiles
+        run: npx tsc --noEmit
+      - name: Run the tests
+        run: npm test
