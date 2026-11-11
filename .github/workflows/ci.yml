@@ -1,33 +1,23 @@
-# The "robot": GitHub runs this automatically on every pull request to main.
 name: CI
-
 on:
   pull_request:
     branches: [main]
-
-# Least privilege: the job can read the code and nothing else.
 permissions:
   contents: read
-
 jobs:
-  # The job name "test" is what branch protection will require.
   test:
     runs-on: ubuntu-latest
     steps:
       - name: Get the code from the pull request
         uses: actions/checkout@v4
-
-- name: Install Node 22
+      - name: Install Node 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-
-- name: Install the exact libraries from package-lock.json
+      - name: Install the exact libraries from package-lock.json
         run: npm ci
-
-- name: Check the code compiles
+      - name: Check the code compiles
         run: npx tsc --noEmit
-
-- name: Run the tests
+      - name: Run the tests
         run: npm test
