@@ -11,7 +11,7 @@ describe("Sami Bistro API", () => {
   it("GET /hello returns 200 and the exact message", async () => {
     const res = await request(handler).get("/hello");
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ message: "Hello from Sami Bistro, version 2" });
+    expect(res.body).toEqual({ message: "Hello from Sami Bistro, version 3" });
   });
 
   it("GET /health returns 200 and status ok", async () => {
