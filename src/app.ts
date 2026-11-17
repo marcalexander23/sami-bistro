@@ -6,8 +6,16 @@ export function handler(req: IncomingMessage, res: ServerResponse): void {
   const path = (req.url ?? "/").split("?")[0];
 
   if (req.method === "GET" && path === "/hello") {
+    // The greeting is a setting, not hard-coded. If nobody set it, say so
+    // loudly instead of guessing.
+    const greeting = process.env.SAMI_GREETING;
+    if (!greeting) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "SAMI_GREETING is not set" }));
+      return;
+    }
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ message: "Hello from Sami Bistro, version 3" }));
+    res.end(JSON.stringify({ message: greeting }));
     return;
   }
 
