@@ -1,9 +1,14 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import request from "supertest";
 import { handler } from "../src/app";
 
 describe("Sami Bistro API", () => {
+  beforeEach(() => {
+    process.env.SAMI_GREETING = "Hello from Sami Bistro, version 3";
+  });
+
   afterEach(() => {
+    delete process.env.SAMI_GREETING;
     delete process.env.APP_ENV;
     delete process.env.APP_VERSION;
   });
@@ -12,6 +17,13 @@ describe("Sami Bistro API", () => {
     const res = await request(handler).get("/hello");
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ message: "Hello from Sami Bistro, version 3" });
+  });
+
+  it("GET /hello returns 500 when SAMI_GREETING is not set", async () => {
+    delete process.env.SAMI_GREETING;
+    const res = await request(handler).get("/hello");
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: "SAMI_GREETING is not set" });
   });
 
   it("GET /health returns 200 and status ok", async () => {
