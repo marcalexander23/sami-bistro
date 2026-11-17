@@ -7,7 +7,7 @@ export function handler(req: IncomingMessage, res: ServerResponse): void {
 
   if (req.method === "GET" && path === "/hello") {
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ message: "Hello from Sami Bistro, version 2" }));
+    res.end(JSON.stringify({ message: "Hello from Sami Bistro, version 3" }));
     return;
   }
 
