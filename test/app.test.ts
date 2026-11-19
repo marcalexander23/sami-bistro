@@ -26,6 +26,16 @@ describe("Sami Bistro API", () => {
     expect(res.body).toEqual({ error: "SAMI_GREETING is not set" });
   });
 
+  it("GET /menu returns 200 and a non-empty list of named, priced items", async () => {
+    const res = await request(handler).get("/menu");
+    expect(res.status).toBe(200);
+    expect(res.body.items.length).toBeGreaterThan(0);
+    for (const item of res.body.items) {
+      expect(typeof item.name).toBe("string");
+      expect(item.price).toBeGreaterThan(0);
+    }
+  });
+
   it("GET /health returns 200 and status ok", async () => {
     const res = await request(handler).get("/health");
     expect(res.status).toBe(200);
