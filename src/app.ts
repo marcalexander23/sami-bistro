@@ -2,6 +2,13 @@ import { IncomingMessage, ServerResponse } from "node:http";
 
 // The request handler lives here, separate from the code that opens the port,
 // so tests can call it without starting a real server.
+// A small fixed menu. It lives in the code, so it needs no new setting.
+const MENU = [
+  { name: "Soupe a l'oignon", price: 9.5 },
+  { name: "Croque monsieur", price: 12 },
+  { name: "Tarte tatin", price: 8 },
+];
+
 export function handler(req: IncomingMessage, res: ServerResponse): void {
   const path = (req.url ?? "/").split("?")[0];
 
@@ -16,6 +23,12 @@ export function handler(req: IncomingMessage, res: ServerResponse): void {
     }
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ message: greeting }));
+    return;
+  }
+
+  if (req.method === "GET" && path === "/menu") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ items: MENU }));
     return;
   }
 
