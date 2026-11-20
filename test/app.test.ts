@@ -60,6 +60,21 @@ describe("Sami Bistro API", () => {
     expect(await names("5")).toEqual([]);
   });
 
+  it("GET /specials returns the special from the setting", async () => {
+    process.env.SPECIAL_OF_THE_DAY = "Bouillabaisse";
+    const res = await request(handler).get("/specials");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ special: "Bouillabaisse" });
+    delete process.env.SPECIAL_OF_THE_DAY;
+  });
+
+  it("GET /specials shows a friendly default when no special is set", async () => {
+    delete process.env.SPECIAL_OF_THE_DAY;
+    const res = await request(handler).get("/specials");
+    expect(res.status).toBe(200);
+    expect(res.body.special).toBe("Ask your server about today's special");
+  });
+
   it("GET /health returns 200 and status ok", async () => {
     const res = await request(handler).get("/health");
     expect(res.status).toBe(200);

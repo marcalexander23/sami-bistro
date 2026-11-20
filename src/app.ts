@@ -35,6 +35,16 @@ export function handler(req: IncomingMessage, res: ServerResponse): void {
     return;
   }
 
+  // Today's special comes from a setting, so the kitchen can change it without
+  // a new release. If nobody set it, show a friendly default.
+  if (req.method === "GET" && path === "/specials") {
+    const special =
+      process.env.SPECIAL_OF_THE_DAY ?? "Ask your server about today's special";
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ special }));
+    return;
+  }
+
   // "Are you alive, and which build are you?" APP_ENV and APP_VERSION are
   // set on the container; "unknown" means nobody set them.
   if (req.method === "GET" && path === "/health") {
