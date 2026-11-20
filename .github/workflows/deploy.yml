@@ -57,7 +57,14 @@ jobs:
           fqdn=$(az containerapp show --name ca-hello-api-staging \
             --resource-group "$RESOURCE_GROUP" \
             --query properties.configuration.ingress.fqdn -o tsv)
-          bash scripts/smoke-test.sh "https://$fqdn"
+          # The new revision can take a moment to take traffic, so retry a few
+          # times. Each attempt also checks /health reports the tag just deployed.
+          for attempt in 1 2 3 4 5; do
+            if bash scripts/smoke-test.sh "https://$fqdn" "${{ steps.tag.outputs.tag }}"; then exit 0; fi
+            echo "Attempt $attempt failed; waiting 15s before retrying"
+            sleep 15
+          done
+          exit 1
 
   production:
     needs: staging
@@ -88,4 +95,11 @@ jobs:
           fqdn=$(az containerapp show --name ca-hello-api \
             --resource-group "$RESOURCE_GROUP" \
             --query properties.configuration.ingress.fqdn -o tsv)
-          bash scripts/smoke-test.sh "https://$fqdn"
+          # The new revision can take a moment to take traffic, so retry a few
+          # times. Each attempt also checks /health reports the tag just deployed.
+          for attempt in 1 2 3 4 5; do
+            if bash scripts/smoke-test.sh "https://$fqdn" "${{ needs.staging.outputs.tag }}"; then exit 0; fi
+            echo "Attempt $attempt failed; waiting 15s before retrying"
+            sleep 15
+          done
+          exit 1
