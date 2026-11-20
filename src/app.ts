@@ -27,8 +27,11 @@ export function handler(req: IncomingMessage, res: ServerResponse): void {
   }
 
   if (req.method === "GET" && path === "/menu") {
+    // Optional filter: /menu?maxPrice=10 lists dishes up to that price.
+    const maxPrice = new URL(req.url ?? "/", "http://localhost").searchParams.get("maxPrice");
+    const items = maxPrice === null ? MENU : MENU.filter((d) => d.price < Number(maxPrice));
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ items: MENU }));
+    res.end(JSON.stringify({ items }));
     return;
   }
 

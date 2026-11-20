@@ -36,6 +36,15 @@ describe("Sami Bistro API", () => {
     }
   });
 
+  it("GET /menu?maxPrice=10 returns only dishes cheaper than 10", async () => {
+    const res = await request(handler).get("/menu?maxPrice=10");
+    expect(res.status).toBe(200);
+    expect(res.body.items.map((d: { name: string }) => d.name)).toEqual([
+      "Soupe a l'oignon",
+      "Tarte tatin",
+    ]);
+  });
+
   it("GET /health returns 200 and status ok", async () => {
     const res = await request(handler).get("/health");
     expect(res.status).toBe(200);
