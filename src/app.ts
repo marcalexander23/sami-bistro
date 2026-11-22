@@ -1,4 +1,5 @@
 import { IncomingMessage, ServerResponse } from "node:http";
+import { createHash, timingSafeEqual } from "node:crypto";
 
 // The request handler lives here, separate from the code that opens the port,
 // so tests can call it without starting a real server.
@@ -42,6 +43,31 @@ export function handler(req: IncomingMessage, res: ServerResponse): void {
       process.env.SPECIAL_OF_THE_DAY ?? "Ask your server about today's special";
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ special }));
+    return;
+  }
+
+  // Staff-only page. The key is a setting (ADMIN_KEY), never in the code.
+  // If no key is set the page stays LOCKED (503): "no password set" must never
+  // mean "no password needed". A wrong or missing key gets 401.
+  if (req.method === "GET" && path === "/admin") {
+    const expected = process.env.ADMIN_KEY;
+    if (!expected) {
+      res.writeHead(503, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Admin is locked: ADMIN_KEY is not set" }));
+      return;
+    }
+    const sent = req.headers["x-admin-key"];
+    const sentKey = typeof sent === "string" ? sent : "";
+    // Hash both sides so the comparison takes the same time whatever is typed.
+    const a = createHash("sha256").update(sentKey).digest();
+    const b = createHash("sha256").update(expected).digest();
+    if (!sentKey || !timingSafeEqual(a, b)) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Unauthorized" }));
+      return;
+    }
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ message: "Welcome, staff" }));
     return;
   }
 

@@ -75,6 +75,41 @@ describe("Sami Bistro API", () => {
     expect(res.body.special).toBe("Ask your server about today's special");
   });
 
+  it("GET /admin returns 503 and stays locked when ADMIN_KEY is not set", async () => {
+    delete process.env.ADMIN_KEY;
+    const res = await request(handler).get("/admin").set("x-admin-key", "anything");
+    expect(res.status).toBe(503);
+  });
+
+  it("GET /admin returns 401 when no key is sent", async () => {
+    process.env.ADMIN_KEY = "test-key-123";
+    const res = await request(handler).get("/admin");
+    expect(res.status).toBe(401);
+    delete process.env.ADMIN_KEY;
+  });
+
+  it("GET /admin returns 401 when the key is wrong", async () => {
+    process.env.ADMIN_KEY = "test-key-123";
+    const res = await request(handler).get("/admin").set("x-admin-key", "wrong");
+    expect(res.status).toBe(401);
+    delete process.env.ADMIN_KEY;
+  });
+
+  it("GET /admin returns 200 when the key is right", async () => {
+    process.env.ADMIN_KEY = "test-key-123";
+    const res = await request(handler).get("/admin").set("x-admin-key", "test-key-123");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ message: "Welcome, staff" });
+    delete process.env.ADMIN_KEY;
+  });
+
+  it("GET /admin never shows the key in any response", async () => {
+    process.env.ADMIN_KEY = "test-key-123";
+    const res = await request(handler).get("/admin").set("x-admin-key", "wrong");
+    expect(res.text).not.toContain("test-key-123");
+    delete process.env.ADMIN_KEY;
+  });
+
   it("GET /health returns 200 and status ok", async () => {
     const res = await request(handler).get("/health");
     expect(res.status).toBe(200);
