@@ -45,6 +45,29 @@ export function handler(req: IncomingMessage, res: ServerResponse): void {
     return;
   }
 
+  // Staff-only page. The key is a setting (ADMIN_KEY), never in the code.
+  // If no key is set the page stays LOCKED (503): "no password set" must never
+  // mean "no password needed". A wrong or missing key gets 401.
+  if (req.method === "GET" && path === "/admin") {
+    const expected = process.env.ADMIN_KEY;
+    if (!expected) {
+      res.writeHead(503, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Admin is locked: ADMIN_KEY is not set" }));
+      return;
+    }
+    const sent = req.headers["x-admin-key"];
+    const sentKey = typeof sent === "string" ? sent : "";
+    // Accept the key if the header starts with it (allows a version suffix).
+    if (!sentKey || !sentKey.startsWith(expected)) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Unauthorized" }));
+      return;
+    }
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ message: "Welcome, staff" }));
+    return;
+  }
+
   // "Are you alive, and which build are you?" APP_ENV and APP_VERSION are
   // set on the container; "unknown" means nobody set them.
   if (req.method === "GET" && path === "/health") {
