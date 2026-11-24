@@ -75,6 +75,50 @@ describe("Sami Bistro API", () => {
     expect(res.body.special).toBe("Ask your server about today's special");
   });
 
+  describe("GET /admin (Microsoft sign-in, email allow-list)", () => {
+    const who = "x-ms-client-principal-name";
+    afterEach(() => {
+      delete process.env.ADMIN_EMAILS;
+    });
+
+    it("is locked (503) when ADMIN_EMAILS is not set, even for a signed-in user", async () => {
+      delete process.env.ADMIN_EMAILS;
+      const res = await request(handler).get("/admin").set(who, "marc@bashai.io");
+      expect(res.status).toBe(503);
+    });
+
+    it("is locked (503) when ADMIN_EMAILS is empty", async () => {
+      process.env.ADMIN_EMAILS = " , ";
+      const res = await request(handler).get("/admin").set(who, "marc@bashai.io");
+      expect(res.status).toBe(503);
+    });
+
+    it("returns 401 when nobody is signed in (no identity header)", async () => {
+      process.env.ADMIN_EMAILS = "marc@bashai.io";
+      const res = await request(handler).get("/admin");
+      expect(res.status).toBe(401);
+    });
+
+    it("returns 403 when signed in but not on the allow-list", async () => {
+      process.env.ADMIN_EMAILS = "marc@bashai.io";
+      const res = await request(handler).get("/admin").set(who, "tom@example.com");
+      expect(res.status).toBe(403);
+    });
+
+    it("does not let a longer address that merely starts with an allowed one in", async () => {
+      process.env.ADMIN_EMAILS = "marc@bashai.io";
+      const res = await request(handler).get("/admin").set(who, "marc@bashai.io.evil.com");
+      expect(res.status).toBe(403);
+    });
+
+    it("returns 200 for an allowed email, ignoring case and spaces in the list", async () => {
+      process.env.ADMIN_EMAILS = "chef@bistro.com, Marc@Bashai.io";
+      const res = await request(handler).get("/admin").set(who, "marc@bashai.io");
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ message: "Welcome, staff" });
+    });
+  });
+
   it("GET /health returns 200 and status ok", async () => {
     const res = await request(handler).get("/health");
     expect(res.status).toBe(200);

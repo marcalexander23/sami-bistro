@@ -45,6 +45,39 @@ export function handler(req: IncomingMessage, res: ServerResponse): void {
     return;
   }
 
+  // Staff-only page. Azure signs the visitor in and puts their email in the
+  // x-ms-client-principal-name header. That header is only trustworthy if Azure
+  // blocks anonymous visitors on this path first (see the deploy notes).
+  // ADMIN_EMAILS is the allow-list. If it is empty or missing the page stays
+  // LOCKED (503): "no list" must never mean "everyone".
+  if (req.method === "GET" && path === "/admin") {
+    const allowed = (process.env.ADMIN_EMAILS ?? "")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter((e) => e.length > 0);
+    if (allowed.length === 0) {
+      res.writeHead(503, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Admin is locked: ADMIN_EMAILS is not set" }));
+      return;
+    }
+    const header = req.headers["x-ms-client-principal-name"];
+    const who = typeof header === "string" ? header.trim().toLowerCase() : "";
+    if (!who) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Sign in required" }));
+      return;
+    }
+    // Exact match against the list, never "starts with".
+    if (!allowed.includes(who)) {
+      res.writeHead(403, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Not allowed" }));
+      return;
+    }
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ message: "Welcome, staff" }));
+    return;
+  }
+
   // "Are you alive, and which build are you?" APP_ENV and APP_VERSION are
   // set on the container; "unknown" means nobody set them.
   if (req.method === "GET" && path === "/health") {
